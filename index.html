@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Магический квадрат · Ведическая нумерология</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --terra: #B5451B;
+    --terra-dark: #8C3214;
+    --terra-light: #D4633A;
+    --bg: #F5EDE0;
+    --bg2: #EDE0CC;
+    --surface: #FBF5EC;
+    --surface2: #F2E8D8;
+    --text: #3B2212;
+    --text-muted: #8C6848;
+    --border: #D9C4A8;
+    --accent: #C8822A;
+  }
+
+  body {
+    background: var(--bg);
+    background-image:
+      radial-gradient(ellipse at 10% 0%, rgba(181,69,27,0.07) 0%, transparent 55%),
+      radial-gradient(ellipse at 90% 100%, rgba(200,130,42,0.08) 0%, transparent 55%);
+    color: var(--text);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem 4rem;
+  }
+
+  .container { width: 100%; max-width: 720px; }
+
+  /* ── Header ── */
+  header { text-align: center; margin-bottom: 2rem; }
+  header h1 {
+    font-size: clamp(1.8rem, 5vw, 2.8rem);
+    font-weight: 600;
+    color: var(--terra);
+    letter-spacing: 3px;
+    margin-bottom: 0.3rem;
+  }
+  header p { color: var(--text-muted); font-size: 1rem; font-style: italic; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+
+  /* ── Input ── */
+  .input-group { margin-bottom: 1.5rem; }
+  .input-group label {
+    display: block;
+    color: var(--terra-dark);
+    font-size: 1rem;
+    margin-bottom: 0.4rem;
+    letter-spacing: 1px;
+  }
+  .input-group input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.65rem 1rem;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 1.1rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .input-group input:focus {
+    border-color: var(--terra);
+    box-shadow: 0 0 0 3px rgba(181,69,27,0.12);
+  }
+  .input-group input::placeholder { color: #B8A090; }
+
+  /* ── Button ── */
+  button.calc-btn {
+    width: 100%;
+    background: var(--terra);
+    border: none;
+    color: #FBF5EC;
+    font-family: inherit;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+    padding: 0.75rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-bottom: 1.5rem;
+  }
+  button.calc-btn:hover { background: var(--terra-dark); }
+
+  /* ── Result layout ── */
+  .result { display: none; }
+  .result.visible { display: block; }
+
+  .result-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    align-items: start;
+    margin-bottom: 1.5rem;
+  }
+  @media (max-width: 520px) { .result-grid { grid-template-columns: 1fr; } }
+
+  /* ── Magic Square canvas ── */
+  .square-wrap { display: flex; flex-direction: column; align-items: center; gap: 0.8rem; }
+  canvas#squareCanvas {
+    border: 2.5px solid var(--terra);
+    border-radius: 2px;
+    display: block;
+    box-shadow: 0 4px 20px rgba(181,69,27,0.15);
+  }
+
+  /* ── Download ── */
+  a.download-btn {
+    display: block;
+    width: 100%;
+    text-align: center;
+    border: 1px solid var(--terra);
+    color: var(--terra);
+    font-family: inherit;
+    font-size: 1rem;
+    padding: 0.5rem;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: background 0.2s, color 0.2s;
+  }
+  a.download-btn:hover { background: var(--terra); color: #FBF5EC; }
+
+  /* ── Info cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.1rem 1.3rem;
+    margin-bottom: 0.7rem;
+    box-shadow: 0 1px 6px rgba(59,34,18,0.06);
+  }
+  .card-label { color: var(--text-muted); font-size: 0.88rem; margin-bottom: 0.3rem; }
+  .number-large { font-size: 3rem; font-weight: 600; color: var(--terra); line-height: 1; }
+  .sub-number { color: var(--text-muted); font-size: 0.9rem; margin-top: 0.3rem; }
+  .sub-number strong { color: var(--text); }
+
+  .planet-badge {
+    display: inline-block;
+    background: var(--terra);
+    color: #FBF5EC;
+    font-weight: 600;
+    padding: 2px 14px;
+    border-radius: 20px;
+    font-size: 1.05rem;
+    margin-bottom: 0.6rem;
+  }
+  .planet-desc { color: var(--terra-dark); line-height: 1.65; font-size: 1rem; }
+
+  /* ── Expanders ── */
+  details {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 0.8rem;
+    overflow: hidden;
+  }
+  details summary {
+    cursor: pointer;
+    padding: 0.8rem 1.1rem;
+    color: var(--terra-dark);
+    font-size: 1rem;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+  }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::after {
+    content: '▸';
+    color: var(--terra);
+    transition: transform 0.2s;
+  }
+  details[open] summary::after { transform: rotate(90deg); }
+  details .details-body {
+    padding: 0 1.1rem 1rem;
+    color: var(--text);
+    font-size: 0.97rem;
+    line-height: 1.7;
+  }
+
+  /* ── Keys table ── */
+  table.keys {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.6rem;
+    font-size: 0.95rem;
+  }
+  table.keys th {
+    text-align: left;
+    color: var(--terra);
+    border-bottom: 1px solid var(--border);
+    padding: 0.35rem 0.5rem;
+    font-weight: 600;
+  }
+  table.keys td {
+    padding: 0.35rem 0.5rem;
+    border-bottom: 1px solid var(--bg2);
+    color: var(--text);
+  }
+  table.keys td:last-child { color: var(--terra-dark); font-weight: 600; }
+
+  /* ── Error ── */
+  .error {
+    background: #FBE9E0;
+    border: 1px solid #D4633A;
+    color: #8C3214;
+    border-radius: 4px;
+    padding: 0.7rem 1rem;
+    font-size: 0.97rem;
+    display: none;
+  }
+  .error.visible { display: block; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>Магический квадрат</h1>
+    <p>Расчёт по дате рождения · Ведическая нумерология</p>
+  </header>
+  <hr class="divider">
+
+  <div class="input-group">
+    <label for="dateInput">Дата рождения (ДД.ММ.ГГГГ)</label>
+    <input id="dateInput" type="text" placeholder="например: 21.10.1986" maxlength="10">
+  </div>
+  <button class="calc-btn" onclick="calculate()">Рассчитать</button>
+
+  <div class="error" id="errorBox">Введите дату в формате ДД.ММ.ГГГГ, например: 21.10.1986</div>
+
+  <div class="result" id="result">
+
+    <div class="result-grid">
+      <div class="square-wrap">
+        <canvas id="squareCanvas" width="240" height="240"></canvas>
+        <a class="download-btn" id="downloadBtn" href="#" download="magic_square.png">Скачать квадрат</a>
+      </div>
+      <div>
+        <div class="card">
+          <div class="card-label">Сумма первой строки</div>
+          <div class="number-large" id="rowSum">—</div>
+          <div class="sub-number">→ однозначное: <strong id="root">—</strong></div>
+        </div>
+        <div class="card">
+          <div class="planet-badge" id="planetBadge">—</div>
+          <div class="planet-desc" id="planetDesc">—</div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <details>
+      <summary>Ключи квадрата — откуда берутся числа</summary>
+      <div class="details-body">
+        <table class="keys" id="keysTable">
+          <thead>
+            <tr><th>Ячейка</th><th>Значение</th><th>Число</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>A</strong></td><td>День рождения</td><td id="kA">—</td></tr>
+            <tr><td><strong>B</strong></td><td>Месяц</td><td id="kB">—</td></tr>
+            <tr><td><strong>C</strong></td><td>Первые две цифры года (век)</td><td id="kC">—</td></tr>
+            <tr><td><strong>D</strong></td><td>Последние две цифры года</td><td id="kD">—</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:0.8rem;color:var(--text-muted);font-size:0.9rem;font-style:italic;">
+          Строки 2–4 вычисляются на основе A, B, C, D со сдвигами ±1, ±2, ±3.
+        </p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Как использовать этот квадрат</summary>
+      <div class="details-body">
+        <p>Этот квадрат отражает структуру вашей даты рождения. Первая строка — четыре ключевых числа: день, месяц и год (разделённый на две части).</p>
+        <br>
+        <p><strong style="color:var(--terra);">Практическое применение:</strong></p>
+        <ul style="margin-top:0.5rem;padding-left:1.2rem;color:var(--terra-dark);">
+          <li>Распечатайте и заламинируйте или перенесите на дерево, бумагу, ткань.</li>
+          <li>Раскрасьте в цвета планет ведической нумерологии или интуитивно.</li>
+          <li>Разместите на рабочем столе, у алтаря, используйте для медитации.</li>
+        </ul>
+        <p style="margin-top:0.8rem;color:var(--text-muted);">За подробной расшифровкой обращайтесь к нумерологу.</p>
+      </div>
+    </details>
+
+  </div><!-- /result -->
+
+  <footer style="margin-top:2.5rem;text-align:center;color:var(--text-muted);font-size:0.92rem;line-height:1.8;border-top:1px solid var(--border);padding-top:1.5rem;">
+    <p style="font-style:italic;">
+      Квадрат рассчитан по формуле, аналогичной магическому квадрату Шивы<br>
+      в храме Чидамбарам (XVIII в., Южная Индия)
+    </p>
+    <p style="margin-top:0.8rem;">
+      За подробным нумерологическим анализом обратитесь к специалисту:<br>
+      <a href="https://goroskop1008.ru/uslugi#!/tproduct/842449103-1498486363994"
+         target="_blank"
+         style="color:var(--terra);text-decoration:none;border-bottom:1px solid var(--terra-light);">
+        goroskop1008.ru
+      </a>
+    </p>
+  </footer>
+
+</div><!-- /container -->
+
+<script>
+const PLANETS = {
+  1: ["Солнце", "☀️", "Индивидуальность, уверенность, энергия лидерства, стремление к признанию, отцовская сила, честолюбие, творческая сила."],
+  2: ["Луна", "🌙", "Чувствительность, эмоциональная глубина, интуиция, заботливость, материнская энергия, смена настроений, мягкость, мечтательность."],
+  3: ["Юпитер", "♃", "Мудрость, духовность, преподавание, вдохновение, защита, закон, наставничество, стремление к знаниям и порядку."],
+  4: ["Раху", "☊", "Нестандартное мышление, изобретательность, внезапные повороты судьбы, стремление к материальному, мистика, иллюзии, нестабильность."],
+  5: ["Меркурий", "☿", "Интеллект, гибкость, дипломатичность, коммерческая жилка, умение убеждать, остроумие, жизнерадостность, быстрая адаптация."],
+  6: ["Венера", "♀", "Любовь, красота, артистизм, чувственность, романтизм, элегантность, стремление к гармонии и удовольствию."],
+  7: ["Кету", "☋", "Интуиция, отстранённость, философичность, мистика, внутренний поиск, кармические уроки, духовный выход из мира форм."],
+  8: ["Сатурн", "♄", "Карма, дисциплина, терпение, тяжёлый труд, надёжность, стабильность, сдержанность, ответственность."],
+  9: ["Марс", "♂", "Действие, энергия, храбрость, напор, агрессия, физическая сила, защита, воинственность, страсть к победе."],
+};
+
+function digitalRoot(n) {
+  while (n > 9) n = String(n).split('').reduce((s, d) => s + parseInt(d), 0);
+  return n;
+}
+
+function buildSquare(a, b, c, d) {
+  return [
+    [a,     b,     c,     d    ],
+    [c - 1, d + 1, a - 1, b + 1],
+    [d - 2, c - 2, b + 2, a + 2],
+    [b + 3, a + 1, d - 1, c - 3],
+  ];
+}
+
+function drawSquare(square) {
+  const canvas = document.getElementById('squareCanvas');
+  const ctx = canvas.getContext('2d');
+  const size = canvas.width;
+  const cell = size / 4;
+  const terra    = '#B5451B';
+  const cellBg   = '#FBF5EC';
+  const cellAlt  = '#F5EDE0';
+  const textCol  = '#3B2212';
+
+  ctx.clearRect(0, 0, size, size);
+  ctx.fillStyle = '#EDE0CC';
+  ctx.fillRect(0, 0, size, size);
+
+  for (let i = 0; i < 4; i++) {
+    for (let j = 0; j < 4; j++) {
+      ctx.fillStyle = (i + j) % 2 === 0 ? cellBg : cellAlt;
+      ctx.fillRect(j * cell + 1, i * cell + 1, cell - 2, cell - 2);
+      ctx.strokeStyle = terra;
+      ctx.lineWidth = 0.7;
+      ctx.strokeRect(j * cell + 0.5, i * cell + 0.5, cell - 1, cell - 1);
+      ctx.fillStyle = textCol;
+      ctx.font = `${Math.round(cell * 0.42)}px 'Cormorant Garamond', Georgia, serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(square[i][j], j * cell + cell / 2, i * cell + cell / 2);
+    }
+  }
+
+  ctx.strokeStyle = terra;
+  ctx.lineWidth = 3;
+  ctx.strokeRect(1.5, 1.5, size - 3, size - 3);
+
+  const link = document.getElementById('downloadBtn');
+  link.href = canvas.toDataURL('image/png');
+}
+
+function calculate() {
+  const raw = document.getElementById('dateInput').value.trim();
+  const err = document.getElementById('errorBox');
+  const res = document.getElementById('result');
+
+  err.classList.remove('visible');
+  res.classList.remove('visible');
+
+  const parts = raw.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  if (!parts) { err.classList.add('visible'); return; }
+
+  const day   = parseInt(parts[1]);
+  const month = parseInt(parts[2]);
+  const year  = parseInt(parts[3]);
+
+  if (day < 1 || day > 31 || month < 1 || month > 12) {
+    err.classList.add('visible'); return;
+  }
+
+  const a = day;
+  const b = month;
+  const c = parseInt(String(year).slice(0, 2));
+  const d = parseInt(String(year).slice(-2));
+
+  const square = buildSquare(a, b, c, d);
+  const rowSum = square[0].reduce((s, v) => s + v, 0);
+  const root   = digitalRoot(rowSum);
+  const [planet, symbol, desc] = PLANETS[root];
+
+  drawSquare(square);
+
+  document.getElementById('rowSum').textContent = rowSum;
+  document.getElementById('root').textContent   = root;
+  document.getElementById('planetBadge').textContent = `${symbol} ${planet}`;
+  document.getElementById('planetDesc').textContent  = desc;
+
+  document.getElementById('kA').textContent = a;
+  document.getElementById('kB').textContent = b;
+  document.getElementById('kC').textContent = c;
+  document.getElementById('kD').textContent = d;
+
+  document.getElementById('downloadBtn').download =
+    `magic_square_${raw.replace(/\./g, '_')}.png`;
+
+  res.classList.add('visible');
+}
+
+// Enter key support
+document.getElementById('dateInput')
+  .addEventListener('keydown', e => { if (e.key === 'Enter') calculate(); });
+
+// Auto-format input: add dots after DD and MM
+document.getElementById('dateInput').addEventListener('input', function () {
+  let v = this.value.replace(/\D/g, '');
+  if (v.length > 2) v = v.slice(0,2) + '.' + v.slice(2);
+  if (v.length > 5) v = v.slice(0,5) + '.' + v.slice(5);
+  if (v.length > 10) v = v.slice(0,10);
+  this.value = v;
+});
+</script>
+</body>
+</html>
